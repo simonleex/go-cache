@@ -38,11 +38,11 @@ func (item *Item) hasExpired() bool {
 func calcExpirationTime(defaultDuration, duration time.Duration) int64 {
 	if duration > 0 {
 		return time.Now().Add(duration).UnixNano()
-	} else if duration == DefaultExpiration {
-		return defaultDuration
+	} else if duration == DefaultExpiration && defaultDuration > 0{
+		return time.Now().Add(defaultDuration).UnixNano()
 	}
 	// here duration must < 0 indicate that there is no expiration
-	return duration
+	return -1
 }
 
 // set or replacing a existing item
@@ -59,7 +59,7 @@ func (c *cache) Add(k string, v interface{}, d time.Duration) error {
 	defer c.mu.RUnlock()
 
 	item, found := c.items[k]
-	if found && item.hasExpired {
+	if found && item.hasExpired() {
 		return fmt.Errorf("there is an item existing by given k %s", k)
 	}
 
@@ -105,7 +105,7 @@ func (c *cache) Get(k string) (interface{}, bool) {
 		return nil, false
 	}
 
-	return item, true
+	return item.Object, true
 }
 
 func (c *cache) DeleteExpired() {
@@ -119,6 +119,19 @@ func (c *cache) DeleteExpired() {
 			delete(c.items, k)
 		}
 	}
+}
+
+func (c *cache) Delete(k string) error{
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	item, found := c.items[k]
+	if !found || item.hasExpired(){
+		return fmt.Errorf("can't find item %s:k", k)
+	}
+	delete(c.items, k)
+
+	return nil
 }
 
 // delete all items
