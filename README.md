@@ -1,1 +1,1 @@
-first commit 
+this is implementing after i reading the source code "github.com:patrickmn/go-cache"
