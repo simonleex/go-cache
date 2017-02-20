@@ -24,6 +24,8 @@ type cache struct {
 	mu                sync.RWMutex
 }
 
+
+var h sync.RWMutex
 const (
 	DefaultExpiration time.Duration = 0
 	NoExpiration      time.Duration = -1
